@@ -90,7 +90,7 @@ startup, synchronization, connected run, disconnection, idling, and shutdown.
 </p>
 <p>
 The governor mode is driven by the MCB status output.
-When the breaker is closed, power+dop control is active.
+When the breaker is closed, power+droop control is active.
 When open, the governor follows the speed reference from the sequence controller.
 </p>
 </html>"));
