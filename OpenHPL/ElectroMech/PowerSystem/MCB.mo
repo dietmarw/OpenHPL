@@ -20,6 +20,9 @@ model MCB "Mechanical equivalent of an electrical Main Circuit Breaker"
                                                          annotation (Placement(transformation(extent={{60,10},{80,-10}})));
   Modelica.Mechanics.Rotational.Interfaces.Flange_a genFlange "Flange to be connected with the generator" annotation (Placement(transformation(extent={{-110,-10},{-90,10}})));
   Modelica.Mechanics.Rotational.Interfaces.Flange_b gridFlange "Flange to be connected with the grid" annotation (Placement(transformation(extent={{88,-10},{108,10}})));
+  Modelica.Blocks.Interfaces.BooleanOutput isClosed "True when the MCB is closed" annotation (Placement(transformation(extent={{90,50},{110,70}}), iconTransformation(extent={{90,50},{110,70}})));
+  Modelica.Blocks.Interfaces.RealOutput closedSignal "1 when the MCB is closed, otherwise 0" annotation (Placement(transformation(extent={{90,30},{110,50}}), iconTransformation(extent={{90,30},{110,50}})));
+  Modelica.Blocks.Math.BooleanToReal booleanToReal(realTrue=1, realFalse=0) annotation (Placement(transformation(extent={{40,50},{60,70}})));
 
   inner Data data annotation (Placement(transformation(extent={{-100,80},{-80,100}})));
 equation
@@ -39,6 +42,9 @@ equation
   connect(and1.y, rSFlipFlop.S) annotation (Line(points={{-19,-20},{-10,-20},{-10,-40},{-2,-40}}, color={255,0,255}));
   connect(closeMCB.y, and1.u2) annotation (Line(points={{-53.4,-28},{-42,-28}}, color={255,0,255}));
   connect(lessThreshold.y, and1.u1) annotation (Line(points={{-11,50},{-50,50},{-50,-20},{-42,-20}}, color={255,0,255}));
+  connect(rSFlipFlop.Q, isClosed) annotation (Line(points={{21,-40},{30,-40},{30,60},{100,60}}, color={255,0,255}));
+  connect(rSFlipFlop.Q, booleanToReal.u) annotation (Line(points={{21,-40},{30,-40},{30,60},{38,60}}, color={255,0,255}));
+  connect(booleanToReal.y, closedSignal) annotation (Line(points={{61,60},{70,60},{70,40},{100,40}}, color={0,0,127}));
   annotation (Icon(graphics={
         Rectangle(extent={{-100,100},{100,-100}}, lineColor={0,0,0}),
         Polygon(
@@ -60,5 +66,9 @@ equation
         Text(
           extent={{50,32},{90,10}},
           textColor={0,0,0},
-          textString="grid")}));
+          textString="grid"),
+        Text(
+          extent={{58,68},{96,52}},
+          textColor={0,0,0},
+          textString="Q")}));
 end MCB;
