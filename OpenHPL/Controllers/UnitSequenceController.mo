@@ -37,54 +37,30 @@ model UnitSequenceController "Time-sequenced startup, run, disconnect, idle and 
     Placement(transformation(extent = {{100, -50}, {120, -30}}), iconTransformation(extent = {{100, -50}, {120, -30}})));
   Modelica.Blocks.Interfaces.BooleanOutput connectedRunActive annotation (
     Placement(transformation(extent = {{100, -90}, {120, -70}}), iconTransformation(extent = {{100, -90}, {120, -70}})));
-
-protected
-  SI.Time startupSpan;
-  SI.Time runSpan;
-  SI.Time shutdownSpan;
-  Real startupAlpha;
-  Real runAlpha;
-  Real shutdownAlpha;
+  Modelica.Blocks.Sources.TimeTable powerSchedule(table = [0, P_start; t_startup, P_sync; t_disconnect, P_run; t_idle_end, P_idle; t_shutdown_end, 0], offset = 0) annotation (
+    Placement(transformation(extent = {{-80, 30}, {-60, 50}})));
+  Modelica.Blocks.Sources.TimeTable speedSchedule(table = [0, f_idle; t_startup, f_sync; t_disconnect, f_idle; t_idle_end, f_idle; t_shutdown_end, f_shutdown], offset = 0) annotation (
+    Placement(transformation(extent = {{-80, -10}, {-60, 10}})));
+  Modelica.Blocks.Sources.BooleanTable startupSchedule(table = {t_sync}, startValue = true) annotation (
+    Placement(transformation(extent = {{-80, -50}, {-60, -30}})));
+  Modelica.Blocks.Sources.BooleanTable connectedRunSchedule(table = {t_sync, t_disconnect}, startValue = false) annotation (
+    Placement(transformation(extent = {{-80, -90}, {-60, -70}})));
 
 equation
-  startupSpan = max(t_startup, 1e-3);
-  runSpan = max(t_disconnect - t_startup, 1e-3);
-  shutdownSpan = max(t_shutdown_end - t_idle_end, 1e-3);
-
-  startupAlpha = min(max(time / startupSpan, 0), 1);
-  runAlpha = min(max((time - t_startup) / runSpan, 0), 1);
-  shutdownAlpha = min(max((time - t_idle_end) / shutdownSpan, 0), 1);
-
-  P_ref = if time < t_startup then
-            P_start + (P_sync - P_start) * startupAlpha
-          elseif time < t_disconnect then
-            P_sync + (P_run - P_sync) * runAlpha
-          elseif time < t_idle_end then
-            P_idle
-          elseif time < t_shutdown_end then
-            P_idle * (1 - shutdownAlpha)
-          else
-            0;
-
-  f_ref_speed = if time < t_startup then
-                  f_idle + (f_sync - f_idle) * startupAlpha
-                elseif time < t_disconnect then
-                  f_sync
-                elseif time < t_idle_end then
-                  f_idle
-                elseif time < t_shutdown_end then
-                  f_idle + (f_shutdown - f_idle) * shutdownAlpha
-                else
-                  f_shutdown;
-
-  startupActive = time < t_sync;
-  connectedRunActive = time >= t_sync and time < t_disconnect;
+  connect(powerSchedule.y, P_ref) annotation (Line(points={{-59,40},{110,40}}, color={0,0,127}));
+  connect(speedSchedule.y, f_ref_speed) annotation (Line(points={{-59,0},{20,0},{20,0},{110,0}}, color={0,0,127}));
+  connect(startupSchedule.y, startupActive) annotation (Line(points={{-59,-40},{110,-40}}, color={255,0,255}));
+  connect(connectedRunSchedule.y, connectedRunActive) annotation (Line(points={{-59,-80},{110,-80}}, color={255,0,255}));
 
   annotation (Documentation(info="<html>
 <h4>Unit Sequence Controller</h4>
 <p>
 This controller generates smooth references for a typical operating cycle:
 startup, synchronization window, connected run, disconnection, idling, and shutdown.
+</p>
+<p>
+The schedules are implemented with explicit time-table and Boolean-table blocks, so the
+transitions are driven by time events only.
 </p>
 <p>
 Use this model together with <code>GovernorDualMode</code> and the MCB component.

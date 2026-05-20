@@ -31,8 +31,6 @@ model GovernorDualMode "Governor with droop and automatic speed/power mode switc
     Dialog(group = "System settings"));
   parameter Real K_speed = 8 "Speed loop gain [pu power / pu frequency error]" annotation (
     Dialog(group = "Controller settings"));
-  parameter Real P_speed_bias_pu = 0.15 "Power bias used in speed mode" annotation (
-    Dialog(group = "System settings"));
   parameter Real P_speed_max_pu = 1.05 "Maximum power command used in speed mode" annotation (
     Dialog(group = "System settings"));
 
@@ -47,7 +45,7 @@ model GovernorDualMode "Governor with droop and automatic speed/power mode switc
   Modelica.Blocks.Interfaces.RealOutput Y_gv annotation (
     Placement(transformation(extent = {{100, -10}, {120, 10}}), iconTransformation(extent = {{100, -10}, {120, 10}})));
 
-  Modelica.Blocks.Sources.RealExpression pSpeedCmd(y = min(P_speed_max_pu * Pn, max(0, Pn * (P_speed_bias_pu + K_speed * (f_ref_speed - f) / f_ref_grid)))) annotation (
+  Modelica.Blocks.Sources.RealExpression pSpeedCmd(y = min(P_speed_max_pu * Pn, max(0, P_ref + Pn * K_speed * (f_ref_speed - f) / f_ref_grid))) annotation (
     Placement(transformation(origin = {-94, -14}, extent = {{-10, -10}, {10, 10}})));
   Modelica.Blocks.Sources.RealExpression fRefSelected(y = if isGridConnected then f_ref_grid else max(f_ref_speed, f_ref_min)) annotation (
     Placement(transformation(origin = {-94, -92}, extent = {{-10, -10}, {10, 10}})));
@@ -155,7 +153,7 @@ equation
 <p>
 This governor model adds mode switching on top of the standard OpenHPL governor architecture.
 When connected to the grid, the controller behaves as a power governor with built-in droop.
-When islanded, it shifts to speed control by generating an internal power command from speed error,
+When islanded, it shifts to speed control by trimming the scheduled power reference with speed error,
 while keeping the same actuator dynamics and guide vane limits.
 </p>
 <p>
