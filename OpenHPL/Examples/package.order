@@ -8,6 +8,7 @@ SimpleGenFrancis
 DetailedGen
 DetailedGenFrancis
 PowerSystemSimple
+GridOperationalCycle
 VolumeFlowSource
 Gate
 Pipes
