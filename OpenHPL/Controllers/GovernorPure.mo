@@ -46,31 +46,73 @@ model GovernorPure "Pure governor with switchable speed/power mode and optional 
   Modelica.Blocks.Interfaces.RealOutput u_ref "Opening reference to HPU dynamics" annotation (
     Placement(transformation(extent = {{100, -10}, {120, 10}}), iconTransformation(extent = {{100, -10}, {120, 10}})));
 
-protected
-  Real Kp_act;
-  Real Ki_act;
-  Real e_ctrl;
-  Real droopTerm;
-  SI.Power P_ref_eff;
-  Real u_unsat;
-  Real xi(start = 0);
+  Modelica.Blocks.Math.Add fDroopErr(k1 = 1, k2 = -1) annotation (
+    Placement(transformation(extent = {{-86, -54}, {-74, -42}})));
+  Modelica.Blocks.Sources.Constant fRefGridConst(k = f_ref_grid) annotation (
+    Placement(transformation(extent = {{-104, -50}, {-92, -38}})));
+  Modelica.Blocks.Math.Gain fDroopNorm(k = if enableDroop then (1 / (f_ref_grid * droop)) else 0) annotation (
+    Placement(transformation(extent = {{-68, -54}, {-56, -42}})));
+  Modelica.Blocks.Math.Gain droopToPower(k = Pn) annotation (
+    Placement(transformation(extent = {{-50, -54}, {-38, -42}})));
+  Modelica.Blocks.Math.Add pRefEff annotation (
+    Placement(transformation(extent = {{-30, -12}, {-18, 0}})));
+
+  Modelica.Blocks.Math.Add pErr(k1 = 1, k2 = -1) annotation (
+    Placement(transformation(extent = {{-86, 20}, {-74, 32}})));
+  Modelica.Blocks.Math.Gain pErrNorm(k = 1 / Pn) annotation (
+    Placement(transformation(extent = {{-68, 20}, {-56, 32}})));
+  Modelica.Blocks.Continuous.LimPID piPower(
+    controllerType = Modelica.Blocks.Types.SimpleController.PI,
+    k = Kp_power,
+    Ti = if Ki_power > 0 then Kp_power / Ki_power else 1e9,
+    Ni = if Kaw > 0 then 1 / Kaw else 1,
+    yMax = u_max,
+    yMin = u_min,
+    initType = Modelica.Blocks.Types.Init.InitialOutput,
+    y_start = u_start) annotation (
+    Placement(transformation(extent = {{-40, 16}, {-24, 32}})));
+
+  Modelica.Blocks.Math.Add fErr annotation (
+    Placement(transformation(extent = {{-86, -92}, {-74, -80}})));
+  Modelica.Blocks.Math.Gain fErrNorm(k = 1 / f_ref_grid) annotation (
+    Placement(transformation(extent = {{-68, -92}, {-56, -80}})));
+  Modelica.Blocks.Continuous.LimPID piSpeed(
+    controllerType = Modelica.Blocks.Types.SimpleController.PI,
+    k = Kp_speed,
+    Ti = if Ki_speed > 0 then Kp_speed / Ki_speed else 1e9,
+    Ni = if Kaw > 0 then 1 / Kaw else 1,
+    yMax = u_max,
+    yMin = u_min,
+    initType = Modelica.Blocks.Types.Init.InitialOutput,
+    y_start = u_start) annotation (
+    Placement(transformation(extent = {{-40, -96}, {-24, -80}})));
+
+  Modelica.Blocks.Logical.Switch modeSwitch annotation (
+    Placement(transformation(extent = {{20, -10}, {40, 10}})));
 
 equation
-  Kp_act = if isGridConnected then Kp_power else Kp_speed;
-  Ki_act = if isGridConnected then Ki_power else Ki_speed;
+  connect(fRefGridConst.y, fDroopErr.u1) annotation (Line(points={{-91.4,-44},{-87.2,-44},{-87.2,-44.4}}, color={0,0,127}));
+  connect(f, fDroopErr.u2) annotation (Line(points={{-120,-40},{-112,-40},{-112,-51.6},{-87.2,-51.6}}, color={0,0,127}));
+  connect(fDroopErr.y, fDroopNorm.u) annotation (Line(points={{-73.4,-48},{-69.2,-48}}, color={0,0,127}));
+  connect(fDroopNorm.y, droopToPower.u) annotation (Line(points={{-55.4,-48},{-51.2,-48}}, color={0,0,127}));
 
-  droopTerm = if isGridConnected and enableDroop then (f_ref_grid - f) / f_ref_grid / droop else 0;
-  P_ref_eff = P_ref + Pn * droopTerm;
+  connect(P_ref, pRefEff.u1) annotation (Line(points={{-120,40},{-44,40},{-44,-2.4},{-31.2,-2.4}}, color={0,0,127}));
+  connect(droopToPower.y, pRefEff.u2) annotation (Line(points={{-37.4,-48},{-34,-48},{-34,-9.6},{-31.2,-9.6}}, color={0,0,127}));
 
-  e_ctrl = if isGridConnected then
-             (P_ref_eff - P_meas) / Pn
-           else
-             (f_ref_speed - f) / f_ref_grid;
+  connect(pRefEff.y, pErr.u1) annotation (Line(points={{-17.4,-6},{-12,-6},{-12,29.6},{-87.2,29.6}}, color={0,0,127}));
+  connect(P_meas, pErr.u2) annotation (Line(points={{-120,0},{-94,0},{-94,22.4},{-87.2,22.4}}, color={0,0,127}));
+  connect(pErr.y, pErrNorm.u) annotation (Line(points={{-73.4,26},{-69.2,26}}, color={0,0,127}));
+  connect(pErrNorm.y, piPower.u_s) annotation (Line(points={{-55.4,26},{-41.6,26}}, color={0,0,127}));
 
-  u_unsat = u_start + Kp_act * e_ctrl + xi;
-  u_ref = min(u_max, max(u_min, u_unsat));
+  connect(f_ref_speed, fErr.u1) annotation (Line(points={{-120,-80},{-92,-80},{-92,-82.4},{-87.2,-82.4}}, color={0,0,127}));
+  connect(f, fErr.u2) annotation (Line(points={{-120,-40},{-100,-40},{-100,-89.6},{-87.2,-89.6}}, color={0,0,127}));
+  connect(fErr.y, fErrNorm.u) annotation (Line(points={{-73.4,-86},{-69.2,-86}}, color={0,0,127}));
+  connect(fErrNorm.y, piSpeed.u_s) annotation (Line(points={{-55.4,-86},{-41.6,-86}}, color={0,0,127}));
 
-  der(xi) = Ki_act * e_ctrl + Kaw * (u_ref - u_unsat);
+  connect(piPower.y, modeSwitch.u1) annotation (Line(points={{-23.2,24},{4,24},{4,8},{18,8}}, color={0,0,127}));
+  connect(piSpeed.y, modeSwitch.u3) annotation (Line(points={{-23.2,-88},{4,-88},{4,-8},{18,-8}}, color={0,0,127}));
+  connect(isGridConnected, modeSwitch.u2) annotation (Line(points={{-120,80},{10,80},{10,0},{18,0}}, color={255,0,255}));
+  connect(modeSwitch.y, u_ref) annotation (Line(points={{41,0},{110,0}}, color={0,0,127}));
 
   annotation (preferredView="info", Documentation(info="<html>
 <h4>Pure Governor</h4>
@@ -85,6 +127,9 @@ The mode switches with <code>isGridConnected</code>:
   <li><strong>Power mode</strong> (connected): PI on active-power error, with optional droop.</li>
   <li><strong>Speed mode</strong> (islanded): PI on frequency error.</li>
 </ul>
+<p>
+The implementation is block-based using Modelica Standard Library blocks.
+</p>
 <p>
 Use <code>u_ref</code> as input to <code>HPUDynamics</code>.
 </p>
