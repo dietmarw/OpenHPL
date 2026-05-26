@@ -9,6 +9,7 @@ DetailedGen
 DetailedGenFrancis
 PowerSystemSimple
 GridOperationalCycle
+GridOperationalCyclePureGov
 VolumeFlowSource
 Gate
 Pipes
