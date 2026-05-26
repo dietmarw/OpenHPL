@@ -35,9 +35,9 @@ model GovernorDualMode "Governor with droop and automatic speed/power mode switc
     Dialog(group = "System settings"));
 
   Modelica.Blocks.Interfaces.RealInput P_ref annotation (
-    Placement(transformation(extent = {{-140, 20}, {-100, 60}}), iconTransformation(extent = {{-140, 20}, {-100, 60}})));
+    Placement(transformation(origin = {0, -10}, extent = {{-140, 20}, {-100, 60}}), iconTransformation(origin = {0, -10}, extent = {{-140, 20}, {-100, 60}})));
   Modelica.Blocks.Interfaces.RealInput f annotation (
-    Placement(transformation(origin = {-120, -40}, extent = {{-20, -20}, {20, 20}})));
+    Placement(transformation(origin = {-120, -30}, extent = {{-20, -20}, {20, 20}}), iconTransformation(origin = {-120, -30}, extent = {{-20, -20}, {20, 20}})));
   Modelica.Blocks.Interfaces.RealInput f_ref_speed annotation (
     Placement(transformation(origin = {-120, -80}, extent = {{-20, -20}, {20, 20}}), iconTransformation(origin = {-120, -80}, extent = {{-20, -20}, {20, 20}})));
   Modelica.Blocks.Interfaces.BooleanInput isGridConnected annotation (
@@ -48,14 +48,14 @@ model GovernorDualMode "Governor with droop and automatic speed/power mode switc
   Modelica.Blocks.Sources.RealExpression pSpeedCmd(y = min(P_speed_max_pu * Pn, max(0, P_ref + Pn * K_speed * (f_ref_speed - f) / f_ref_grid))) annotation (
     Placement(transformation(origin = {-94, -14}, extent = {{-10, -10}, {10, 10}})));
   Modelica.Blocks.Sources.RealExpression fRefSelected(y = if isGridConnected then f_ref_grid else max(f_ref_speed, f_ref_min)) annotation (
-    Placement(transformation(origin = {-94, -92}, extent = {{-10, -10}, {10, 10}})));
+    Placement(transformation(origin = {-86, -82}, extent = {{-10, -10}, {10, 10}})));
 
   Modelica.Blocks.Logical.Switch pCmdSwitch annotation (
     Placement(transformation(origin = {-78, 12}, extent = {{-10, -10}, {10, 10}})));
   Modelica.Blocks.Continuous.FirstOrder pCmdFilter(T = T_mode, initType = Modelica.Blocks.Types.Init.InitialOutput, y_start = Y_gv_ref * Pn) annotation (
     Placement(transformation(origin = {-56, 12}, extent = {{-10, -10}, {10, 10}})));
   Modelica.Blocks.Continuous.FirstOrder fRefFilter(T = T_mode, initType = Modelica.Blocks.Types.Init.InitialOutput, y_start = f_ref_grid) annotation (
-    Placement(transformation(origin = {-56, -78}, extent = {{-10, -10}, {10, 10}})));
+    Placement(transformation(origin = {-54, -82}, extent = {{-10, -10}, {10, 10}})));
 
   Modelica.Blocks.Tables.CombiTable1Dv look_up_table(table = lookup_table) annotation (
     Placement(transformation(origin = {-14, 40}, extent = {{10, -10}, {-10, 10}}, rotation = 180)));
@@ -84,13 +84,13 @@ model GovernorDualMode "Governor with droop and automatic speed/power mode switc
   Modelica.Blocks.Sources.Constant const(k = 1) annotation (
     Placement(transformation(origin = {0, -80}, extent = {{10, -10}, {-10, 10}})));
   Modelica.Blocks.Math.Gain gain_droop2(k = droop) annotation (
-    Placement(transformation(origin = {-40, -4}, extent = {{-10, 10}, {10, -10}}, rotation = -90)));
+    Placement(transformation(origin = {-46, -12}, extent = {{-10, 10}, {10, -10}}, rotation = -90)));
   Modelica.Blocks.Math.Division fRatio annotation (
-    Placement(transformation(origin = {-40, -60}, extent = {{-10, -10}, {10, 10}})));
+    Placement(transformation(origin = {-48, -56}, extent = {{-10, -10}, {10, 10}})));
 
 equation
   connect(P_ref, pCmdSwitch.u1) annotation (
-    Line(points = {{-120, 40}, {-90, 40}, {-90, 20}}, color = {0, 0, 127}));
+    Line(points = {{-120, 30}, {-120, 40}, {-90, 40}, {-90, 20}}, color = {0, 0, 127}));
   connect(pSpeedCmd.y, pCmdSwitch.u3) annotation (
     Line(points = {{-83, -14}, {-70, -14}, {-70, 4}}, color = {0, 0, 127}));
   connect(isGridConnected, pCmdSwitch.u2) annotation (
@@ -99,24 +99,24 @@ equation
     Line(points = {{-67, 12}, {-68, 12}}, color = {0, 0, 127}));
 
   connect(fRefSelected.y, fRefFilter.u) annotation (
-    Line(points = {{-83, -92}, {-68, -92}, {-68, -78}}, color = {0, 0, 127}));
+    Line(points = {{-75, -82}, {-66, -82}}, color = {0, 0, 127}));
 
   connect(pCmdFilter.y, gain_P.u) annotation (
     Line(points = {{-45, 12}, {-36, 12}, {-36, 28}}, color = {0, 0, 127}));
   connect(gain_P.y, look_up_table.u[1]) annotation (
     Line(points = {{-25, 40}, {-26, 40}}, color = {0, 0, 127}));
   connect(look_up_table.y[1], gain_droop2.u) annotation (
-    Line(points = {{-3, 40}, {0, 40}, {0, 20}, {-40, 20}, {-40, 8}}, color = {0, 0, 127}));
+    Line(points = {{-3, 40}, {0, 40}, {0, 18}, {-46, 18}, {-46, 0}}, color = {0, 0, 127}));
 
   connect(gain_droop2.y, add2.u1) annotation (
-    Line(points = {{-40, -15}, {-40, -44}, {-26, -44}, {-26, -36}}, color = {0, 0, 127}));
+    Line(points = {{-46, -23}, {-46, -25.5}, {-26, -25.5}, {-26, -36}}, color = {0, 0, 127}));
 
   connect(f, fRatio.u1) annotation (
-    Line(points = {{-120, -40}, {-80, -40}, {-80, -54}, {-52, -54}}, color = {0, 0, 127}));
+    Line(points = {{-120, -30}, {-80, -30}, {-80, -50}, {-60, -50}}, color = {0, 0, 127}));
   connect(fRefFilter.y, fRatio.u2) annotation (
-    Line(points = {{-45, -78}, {-20, -78}, {-20, -66}, {-52, -66}}, color = {0, 0, 127}));
+    Line(points = {{-43, -82}, {-20, -82}, {-20, -62}, {-60, -62}}, color = {0, 0, 127}));
   connect(fRatio.y, add3.u2) annotation (
-    Line(points = {{-29, -60}, {-24, -60}, {-24, -72}}, color = {0, 0, 127}));
+    Line(points = {{-37, -56}, {-37, -60}, {-24, -60}, {-24, -72}}, color = {0, 0, 127}));
   connect(const.y, add3.u1) annotation (
     Line(points = {{-11, -80}, {-12, -80}, {-12, -72}}, color = {0, 0, 127}));
 

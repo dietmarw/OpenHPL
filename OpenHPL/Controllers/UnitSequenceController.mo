@@ -30,27 +30,27 @@ model UnitSequenceController "Time-sequenced startup, run, disconnect, idle and 
     Dialog(group = "Speed settings"));
 
   Modelica.Blocks.Interfaces.RealOutput P_ref(unit = "W") annotation (
-    Placement(transformation(extent = {{100, 30}, {120, 50}}), iconTransformation(extent = {{100, 30}, {120, 50}})));
+    Placement(transformation(origin = {0, 40}, extent = {{100, 30}, {120, 50}}), iconTransformation(origin = {0, 40}, extent = {{100, 30}, {120, 50}})));
   Modelica.Blocks.Interfaces.RealOutput f_ref_speed(unit = "Hz") annotation (
-    Placement(transformation(extent = {{100, -10}, {120, 10}}), iconTransformation(extent = {{100, -10}, {120, 10}})));
+    Placement(transformation(origin = {0, 40}, extent = {{100, -10}, {120, 10}}), iconTransformation(origin = {0, 40}, extent = {{100, -10}, {120, 10}})));
   Modelica.Blocks.Interfaces.BooleanOutput startupActive annotation (
     Placement(transformation(extent = {{100, -50}, {120, -30}}), iconTransformation(extent = {{100, -50}, {120, -30}})));
   Modelica.Blocks.Interfaces.BooleanOutput connectedRunActive annotation (
     Placement(transformation(extent = {{100, -90}, {120, -70}}), iconTransformation(extent = {{100, -90}, {120, -70}})));
   Modelica.Blocks.Sources.TimeTable powerSchedule(table = [0, P_start; t_startup, P_sync; t_disconnect, P_run; t_idle_end, P_idle; t_shutdown_end, 0], offset = 0) annotation (
-    Placement(transformation(extent = {{-80, 30}, {-60, 50}})));
+    Placement(transformation(origin = {70, 40}, extent = {{-80, 30}, {-60, 50}})));
   Modelica.Blocks.Sources.TimeTable speedSchedule(table = [0, f_idle; t_startup, f_sync; t_disconnect, f_idle; t_idle_end, f_idle; t_shutdown_end, f_shutdown], offset = 0) annotation (
-    Placement(transformation(extent = {{-80, -10}, {-60, 10}})));
+    Placement(transformation(origin = {70, 40}, extent = {{-80, -10}, {-60, 10}})));
   Modelica.Blocks.Sources.BooleanTable startupSchedule(table = {t_sync}, startValue = true) annotation (
-    Placement(transformation(extent = {{-80, -50}, {-60, -30}})));
+    Placement(transformation(origin = {68, 0}, extent = {{-80, -50}, {-60, -30}})));
   Modelica.Blocks.Sources.BooleanTable connectedRunSchedule(table = {t_sync, t_disconnect}, startValue = false) annotation (
-    Placement(transformation(extent = {{-80, -90}, {-60, -70}})));
+    Placement(transformation(origin = {70, 0}, extent = {{-80, -90}, {-60, -70}})));
 
 equation
-  connect(powerSchedule.y, P_ref) annotation (Line(points={{-59,40},{110,40}}, color={0,0,127}));
-  connect(speedSchedule.y, f_ref_speed) annotation (Line(points={{-59,0},{20,0},{20,0},{110,0}}, color={0,0,127}));
-  connect(startupSchedule.y, startupActive) annotation (Line(points={{-59,-40},{110,-40}}, color={255,0,255}));
-  connect(connectedRunSchedule.y, connectedRunActive) annotation (Line(points={{-59,-80},{110,-80}}, color={255,0,255}));
+  connect(powerSchedule.y, P_ref) annotation (Line(points={{11,80},{110,80}}, color={0,0,127}));
+  connect(speedSchedule.y, f_ref_speed) annotation (Line(points={{11,40},{110, 40}}, color={0,0,127}));
+  connect(startupSchedule.y, startupActive) annotation (Line(points={{9,-40},{110,-40}}, color={255,0,255}));
+  connect(connectedRunSchedule.y, connectedRunActive) annotation (Line(points={{11,-80},{110,-80}}, color={255,0,255}));
 
   annotation (Documentation(info="<html>
 <h4>Unit Sequence Controller</h4>
