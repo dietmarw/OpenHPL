@@ -57,10 +57,10 @@ model GovernorPure "Pure governor with switchable speed/power mode and optional 
   Modelica.Blocks.Math.Add pRefEff annotation (
     Placement(transformation(extent = {{-30, -12}, {-18, 0}})));
 
-  Modelica.Blocks.Math.Add pErr(k1 = 1, k2 = -1) annotation (
-    Placement(transformation(extent = {{-86, 20}, {-74, 32}})));
-  Modelica.Blocks.Math.Gain pErrNorm(k = 1 / Pn) annotation (
-    Placement(transformation(extent = {{-68, 20}, {-56, 32}})));
+  Modelica.Blocks.Math.Gain pRefNorm(k = 1 / Pn) annotation (
+    Placement(transformation(extent = {{-86, 24}, {-74, 36}})));
+  Modelica.Blocks.Math.Gain pMeasNorm(k = 1 / Pn) annotation (
+    Placement(transformation(extent = {{-86, 4}, {-74, 16}})));
   Modelica.Blocks.Continuous.LimPID piPower(
     controllerType = Modelica.Blocks.Types.SimpleController.PI,
     k = Kp_power,
@@ -72,10 +72,10 @@ model GovernorPure "Pure governor with switchable speed/power mode and optional 
     y_start = u_start) annotation (
     Placement(transformation(extent = {{-40, 16}, {-24, 32}})));
 
-  Modelica.Blocks.Math.Add fErr annotation (
-    Placement(transformation(extent = {{-86, -92}, {-74, -80}})));
-  Modelica.Blocks.Math.Gain fErrNorm(k = 1 / f_ref_grid) annotation (
-    Placement(transformation(extent = {{-68, -92}, {-56, -80}})));
+  Modelica.Blocks.Math.Gain fRefNorm(k = 1 / f_ref_grid) annotation (
+    Placement(transformation(extent = {{-86, -82}, {-74, -70}})));
+  Modelica.Blocks.Math.Gain fMeasNorm(k = 1 / f_ref_grid) annotation (
+    Placement(transformation(extent = {{-86, -100}, {-74, -88}})));
   Modelica.Blocks.Continuous.LimPID piSpeed(
     controllerType = Modelica.Blocks.Types.SimpleController.PI,
     k = Kp_speed,
@@ -88,7 +88,7 @@ model GovernorPure "Pure governor with switchable speed/power mode and optional 
     Placement(transformation(extent = {{-40, -96}, {-24, -80}})));
 
   Modelica.Blocks.Logical.Switch modeSwitch annotation (
-    Placement(transformation(extent = {{20, -10}, {40, 10}})));
+    Placement(transformation(origin = {40, 0}, extent = {{20, -10}, {40, 10}})));
 
 equation
   connect(fRefGridConst.y, fDroopErr.u1) annotation (Line(points={{-91.4,-44},{-87.2,-44},{-87.2,-44.4}}, color={0,0,127}));
@@ -99,21 +99,21 @@ equation
   connect(P_ref, pRefEff.u1) annotation (Line(points={{-120,40},{-44,40},{-44,-2.4},{-31.2,-2.4}}, color={0,0,127}));
   connect(droopToPower.y, pRefEff.u2) annotation (Line(points={{-37.4,-48},{-34,-48},{-34,-9.6},{-31.2,-9.6}}, color={0,0,127}));
 
-  connect(pRefEff.y, pErr.u1) annotation (Line(points={{-17.4,-6},{-12,-6},{-12,29.6},{-87.2,29.6}}, color={0,0,127}));
-  connect(P_meas, pErr.u2) annotation (Line(points={{-120,0},{-94,0},{-94,22.4},{-87.2,22.4}}, color={0,0,127}));
-  connect(pErr.y, pErrNorm.u) annotation (Line(points={{-73.4,26},{-69.2,26}}, color={0,0,127}));
-  connect(pErrNorm.y, piPower.u_s) annotation (Line(points={{-55.4,26},{-41.6,26}}, color={0,0,127}));
+  connect(pRefEff.y, pRefNorm.u) annotation (Line(points={{-17.4,-6},{-12,-6},{-12,30},{-87.2,30}}, color={0,0,127}));
+  connect(P_meas, pMeasNorm.u) annotation (Line(points={{-120,0},{-98.5,0},{-98.5,10},{-87.2,10}}, color={0,0,127}));
+  connect(pRefNorm.y, piPower.u_s) annotation (Line(points={{-73.4,30},{-60,30},{-60,26},{-41.6,26}}, color={0,0,127}));
+  connect(pMeasNorm.y, piPower.u_m) annotation (Line(points={{-73.4,10},{-64,10},{-64,18.4},{-32,18.4}}, color={0,0,127}));
 
-  connect(f_ref_speed, fErr.u1) annotation (Line(points={{-120,-80},{-92,-80},{-92,-82.4},{-87.2,-82.4}}, color={0,0,127}));
-  connect(f, fErr.u2) annotation (Line(points={{-120,-40},{-100,-40},{-100,-89.6},{-87.2,-89.6}}, color={0,0,127}));
-  connect(fErr.y, fErrNorm.u) annotation (Line(points={{-73.4,-86},{-69.2,-86}}, color={0,0,127}));
-  connect(fErrNorm.y, piSpeed.u_s) annotation (Line(points={{-55.4,-86},{-41.6,-86}}, color={0,0,127}));
+  connect(f_ref_speed, fRefNorm.u) annotation (Line(points={{-120,-80},{-87.2,-80},{-87.2,-76}}, color={0,0,127}));
+  connect(f, fMeasNorm.u) annotation (Line(points={{-120,-40},{-100,-40},{-100,-94},{-87.2,-94}}, color={0,0,127}));
+  connect(fRefNorm.y, piSpeed.u_s) annotation (Line(points={{-73.4,-76},{-58,-76},{-58,-86},{-41.6,-86}}, color={0,0,127}));
+  connect(fMeasNorm.y, piSpeed.u_m) annotation (Line(points={{-73.4,-94},{-64,-94},{-64,-93.6},{-32,-93.6}}, color={0,0,127}));
 
-  connect(piPower.y, modeSwitch.u1) annotation (Line(points={{-23.2,24},{4,24},{4,8},{18,8}}, color={0,0,127}));
-  connect(piSpeed.y, modeSwitch.u3) annotation (Line(points={{-23.2,-88},{4,-88},{4,-8},{18,-8}}, color={0,0,127}));
-  connect(isGridConnected, modeSwitch.u2) annotation (Line(points={{-120,80},{10,80},{10,0},{18,0}}, color={255,0,255}));
-  connect(modeSwitch.y, u_ref) annotation (Line(points={{41,0},{110,0}}, color={0,0,127}));
 
+  connect(piPower.y, modeSwitch.u1) annotation (Line(points={{-23.2,24},{4,24},{4,8},{58,8}}, color={0,0,127}));
+  connect(piSpeed.y, modeSwitch.u3) annotation (Line(points={{-23.2,-88},{4,-88},{4,-8},{58,-8}}, color={0,0,127}));
+  connect(isGridConnected, modeSwitch.u2) annotation (Line(points={{-120,80},{10,80},{10,0},{58,0}}, color={255,0,255}));
+  connect(modeSwitch.y, u_ref) annotation (Line(points={{81,0},{110,0}}, color={0,0,127}));
   annotation (preferredView="info", Documentation(info="<html>
 <h4>Pure Governor</h4>
 <p>
