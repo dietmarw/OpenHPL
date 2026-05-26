@@ -1,5 +1,6 @@
 within OpenHPL.Icons;
 partial class Governor "Governor icon"
+  extends Modelica.Blocks.Icons.Block;
   annotation (
     preferredView="icon",
     Icon(graphics={ Bitmap(extent = {{-60, -60}, {60, 60}}, origin = {2, 0}, rotation = 360,
