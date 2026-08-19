@@ -28,6 +28,8 @@ model GovernorHydrotrol "Unit governor with start sequence, speed-no-load, synch
     Dialog(group = "Speed control"));
   parameter Real Ki_speed = 0.6 "Speed loop integral gain [pu opening / (pu speed . s)]" annotation (
     Dialog(group = "Speed control"));
+  parameter Real Kaw = 2.0 "Anti-windup back-calculation gain [1/s]" annotation (
+    Dialog(group = "Control settings"));
   parameter Real Kp_power = 0.6 "Power loop proportional gain [pu opening / pu power]" annotation (
     Dialog(group = "Power control"));
   parameter Real Ki_power = 0.1 "Power loop integral gain [pu opening / (pu power . s)]" annotation (
@@ -128,11 +130,12 @@ equation
       else (f_grid_int + f_bias - f) / f_n;
 
   y_pi = Kp * e + x_i;
-  der(x_i) = if closedLoop and not ((y_pi > u_max and e > 0) or (y_pi < u_min and e < 0)) then Ki * e else 0;
-
   Y_cmd = if mode == STARTING then Y_start
           elseif closedLoop then min(u_max, max(u_min, y_pi))
           else u_min;
+
+  // Continuous back-calculation avoids event chattering at the output limits.
+  der(x_i) = if closedLoop then Ki * e + Kaw * (Y_cmd - y_pi) else 0;
 
   der(Y_gv) = min(openRateMax, max(-closeRateMax, (Y_cmd - Y_gv) / T_servo));
 
