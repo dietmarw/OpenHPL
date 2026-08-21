@@ -1,5 +1,5 @@
 within OpenHPL.Controllers;
-model GovernorHydrotrol "Unit governor with start sequence, speed-no-load, synchronisation and power control"
+model HydroGov "Unit governor with start sequence, speed-no-load, synchronisation and power control"
   extends OpenHPL.Icons.Governor;
   outer Data data "Using standard class with constants";
 
@@ -157,10 +157,10 @@ algorithm
   annotation (
     preferredView = "info",
     Documentation(info="<html>
-<h4>Hydrotrol-like Unit Governor</h4>
+<h4>HydroGov Unit Governor</h4>
 <p>
 This governor reproduces the main operating logic of a modern digital unit governor
-(similar to the Hymatek Hydrotrol family). It contains an internal sequence, both control
+(inspired by industrial hydro-unit governors). It contains an internal sequence, both control
 modes and the guide-vane actuator, so it can be connected directly between the unit
 sequencing signals and the turbine.
 </p>
@@ -190,4 +190,4 @@ If <code>useGridFrequencyInput</code> is false the rated frequency <code>f_n</co
 synchronising reference and the <code>f_grid</code> connector is removed.
 </p>
 </html>"));
-end GovernorHydrotrol;
+end HydroGov;
