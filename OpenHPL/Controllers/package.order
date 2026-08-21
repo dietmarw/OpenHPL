@@ -2,6 +2,7 @@ Governor
 GovernorPure
 HPUDynamics
 GovernorDualMode
-GovernorHydrotrol
-GovernorHydrotrolBlocks
+HydroGov
+HydroGovBlocks
+ModeDetermination
 UnitSequenceController

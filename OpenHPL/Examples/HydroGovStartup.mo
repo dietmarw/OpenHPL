@@ -1,5 +1,5 @@
 within OpenHPL.Examples;
-model HydrotrolStartup "Startup sequence using the Hydrotrol-like governor"
+model HydroGovStartup "Startup sequence using the HydroGov governor"
   extends Modelica.Icons.Example;
 
   OpenHPL.Waterway.Reservoir reservoir(h_0 = 10, fixElevation = true, z_0 = 100)
@@ -25,7 +25,7 @@ model HydrotrolStartup "Startup sequence using the Hydrotrol-like governor"
     f_0 = 0,
     fixed_iniSpeed = true)
     annotation (Placement(transformation(origin = {50, 0}, extent = {{-10, -10}, {10, 10}})));
-  OpenHPL.Controllers.GovernorHydrotrol governor(
+  OpenHPL.Controllers.HydroGovBlocks governor(
     f_n = data.f_grid,
     Pn = 10e6,
     Y_start = 0.6,
@@ -77,7 +77,7 @@ equation
     StartTime = 0,
     Tolerance = 1e-06,
     Interval = 0.5), Documentation(info = "<html>
-<h4>Hydrotrol Startup Example</h4>
+<h4>HydroGov Startup Example</h4>
 <p>
 This example uses the simple turbine and generator models to demonstrate a complete
 unit cycle. At <code>t=5 s</code> the governor opens the guide vanes, accelerates
@@ -91,4 +91,4 @@ The ideal breaker is represented by the feedback from <code>syncCommand</code> t
 an electrical breaker and its measured status.
 </p>
 </html>"));
-end HydrotrolStartup;
+end HydroGovStartup;

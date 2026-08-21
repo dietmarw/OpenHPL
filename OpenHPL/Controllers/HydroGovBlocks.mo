@@ -1,5 +1,5 @@
 within OpenHPL.Controllers;
-model GovernorHydrotrolBlocks "Block-based Hydrotrol governor with start sequence, synchronisation and power control"
+model HydroGovBlocks "Block-based HydroGov governor with start sequence, synchronisation and power control"
   extends OpenHPL.Icons.Governor;
   outer Data data "Using standard class with constants";
 
@@ -44,7 +44,7 @@ model GovernorHydrotrolBlocks "Block-based Hydrotrol governor with start sequenc
   Modelica.Blocks.Interfaces.BooleanOutput syncCommand "Request to close the generator breaker" annotation (Placement(transformation(extent = {{100, 50}, {120, 70}}), iconTransformation(extent = {{100, 50}, {120, 70}})));
   Modelica.Blocks.Interfaces.IntegerOutput mode(start = mode_start, fixed = true) "Active sequence state" annotation (Placement(transformation(extent = {{100, -70}, {120, -50}}), iconTransformation(extent = {{100, -70}, {120, -50}})));
 
-  Modelica.Blocks.Continuous.LimPID piSpeed(controllerType = Modelica.Blocks.Types.SimpleController.PI, k = Kp_speed, Ti = if Ki_speed > 0 then Kp_speed / Ki_speed else 1e9, Ni = if Kaw > 0 then 1 / Kaw else 1, yMax = u_max, yMin = u_min, initType = Modelica.Blocks.Types.Init.InitialOutput, y_start = Y_gv_start) annotation (Placement(transformation(origin = {-30, -55}, extent = {{-10, -10}, {10, 10}})));
+  Modelica.Blocks.Continuous.LimPID piSpeed(controllerType = Modelica.Blocks.Types.SimpleController.PI, k = Kp_speed, Ti = if Ki_speed > 0 then Kp_speed / Ki_speed else 1e9, Ni = if Kaw > 0 then 1 / Kaw else 1, yMax = u_max, yMin = u_min, initType = Modelica.Blocks.Types.Init.InitialOutput, y_start = Y_gv_start) annotation (Placement(transformation(origin = {-20, -53}, extent = {{-10, -10}, {10, 10}})));
   Modelica.Blocks.Continuous.LimPID piPower(controllerType = Modelica.Blocks.Types.SimpleController.PI, k = Kp_power, Ti = if Ki_power > 0 then Kp_power / Ki_power else 1e9, Ni = if Kaw > 0 then 1 / Kaw else 1, yMax = u_max, yMin = u_min, initType = Modelica.Blocks.Types.Init.InitialOutput, y_start = Y_gv_start) annotation (Placement(transformation(origin = {-30, 25}, extent = {{-10, -10}, {10, 10}})));
   Modelica.Blocks.Math.Gain speedRefNorm(k = 1 / f_n) annotation (Placement(transformation(extent = {{-90, -70}, {-78, -58}})));
   Modelica.Blocks.Math.Add speedReference(k1 = 1, k2 = 1) annotation (Placement(transformation(extent = {{-110, -70}, {-98, -58}})));
@@ -54,18 +54,16 @@ model GovernorHydrotrolBlocks "Block-based Hydrotrol governor with start sequenc
   Modelica.Blocks.Math.Add droopError(k1 = 1, k2 = -1) annotation (Placement(transformation(extent = {{-90, -5}, {-78, 7}})));
   Modelica.Blocks.Math.Gain droopGain(k = if enableDroop then 1 / (f_n * droop) else 0) annotation (Placement(transformation(extent = {{-70, -5}, {-58, 7}})));
   Modelica.Blocks.Math.Add3 powerReference(k1 = 1, k2 = 1, k3 = 0) annotation (Placement(transformation(extent = {{-55, 35}, {-43, 47}})));
-  Modelica.Blocks.Logical.Switch powerModeSwitch annotation (Placement(transformation(origin = {15, 25}, extent = {{-10, -10}, {10, 10}})));
-  Modelica.Blocks.Logical.Switch closedLoopSwitch annotation (Placement(transformation(origin = {40, -15}, extent = {{-10, -10}, {10, 10}})));
-  Modelica.Blocks.Logical.Switch startSwitch annotation (Placement(transformation(origin = {65, 0}, extent = {{-10, -10}, {10, 10}})));
-  Modelica.Blocks.Sources.Constant zero(k = u_min) annotation (Placement(transformation(extent = {{10, -45}, {22, -33}})));
+  Modelica.Blocks.Logical.Switch powerModeSwitch annotation (Placement(transformation(origin = {15, 19}, extent = {{-10, -10}, {10, 10}})));
+  Modelica.Blocks.Logical.Switch closedLoopSwitch annotation (Placement(transformation(origin = {44, -19}, extent = {{-10, -10}, {10, 10}})));
+  Modelica.Blocks.Logical.Switch startSwitch annotation (Placement(transformation(origin = {73, 0}, extent = {{-10, -10}, {10, 10}})));
+  Modelica.Blocks.Sources.Constant zero(k = u_min) annotation (Placement(transformation(origin = {-2, 0}, extent = {{10, -45}, {22, -33}})));
   Modelica.Blocks.Sources.Constant speedBias(k = f_bias) annotation (Placement(transformation(extent = {{-130, -55}, {-118, -43}})));
-  Modelica.Blocks.Sources.Constant startOpening(k = Y_start) annotation (Placement(transformation(extent = {{35, 25}, {47, 37}})));
+  Modelica.Blocks.Sources.Constant startOpening(k = Y_start) annotation (Placement(transformation(origin = {0, -2}, extent = {{35, 25}, {47, 37}})));
+  ModeDetermination modeDetermination(f_speedctrl = f_speedctrl, f_stopped = f_stopped, mode_start = mode_start) annotation (Placement(transformation(origin = {11, 72}, extent = {{-10, -10}, {10, 10}})));
 
   Real y_pi "Selected unlimited controller output";
   Real Y_cmd "Opening command before actuator";
-  Modelica.Blocks.Interfaces.BooleanOutput closedLoop "True when a PI controller drives the guide vanes";
-  Modelica.Blocks.Interfaces.BooleanOutput powerMode "True in power control mode";
-  Modelica.Blocks.Interfaces.BooleanOutput startingMode "True in open-loop starting mode";
   Boolean inSyncWindow "True while speed is inside the synchronising window";
   discrete Real t_window(start = Modelica.Constants.inf, fixed = true);
 protected
@@ -77,25 +75,15 @@ equation
     f_grid_int = f_n;
   end if;
 
-algorithm
-  when {stop and pre(mode) <> STOPPED,
-        start and pre(mode) == STOPPED,
-        pre(mode) == STARTING and f >= f_speedctrl,
-        pre(mode) == SPEED and breakerClosed,
-        pre(mode) == POWER and not breakerClosed,
-        pre(mode) == SHUTDOWN and f <= f_stopped} then
-    mode := if stop and pre(mode) <> STOPPED then SHUTDOWN
-            elseif pre(mode) == STOPPED then STARTING
-            elseif pre(mode) == STARTING then SPEED
-            elseif pre(mode) == SPEED then POWER
-            elseif pre(mode) == POWER then SPEED
-            else STOPPED;
-  end when;
-
 equation
-  closedLoop = mode == SPEED or mode == POWER;
-  powerMode = mode == POWER;
-  startingMode = mode == STARTING;
+  connect(start, modeDetermination.start) annotation (Line(points = {{-120, 80}, {-115, 80}, {-115, 96}}, color = {255, 0, 255}));
+  connect(stop, modeDetermination.stop) annotation (Line(points = {{-120, 40}, {-118, 40}, {-118, 92}, {-115, 92}}, color = {255, 0, 255}));
+  connect(breakerClosed, modeDetermination.breakerClosed) annotation (Line(points = {{-120, 0}, {-120, 0}, {-115, 0}, {-115, 88}}, color = {255, 0, 255}));
+  connect(f, modeDetermination.f) annotation (Line(points = {{-120, -100}, {-122, -100}, {-122, 84}, {-115, 84}}, color = {0, 0, 127}));
+  mode = modeDetermination.mode;
+  connect(modeDetermination.closedLoop, closedLoopSwitch.u2) annotation (Line(points = {{-95, 88}, {-20, 88}, {-20, -19}, {34, -19}}, color = {255, 0, 255}));
+  connect(modeDetermination.powerMode, powerModeSwitch.u2) annotation (Line(points = {{-95, 84}, {-5, 84}, {-5, 19}, {5, 19}}, color = {255, 0, 255}));
+  connect(modeDetermination.startingMode, startSwitch.u2) annotation (Line(points = {{-95, 80}, {-25, 80}, {-25, 0}, {63, 0}}, color = {255, 0, 255}));
   connect(f_grid_int, speedReference.u1) annotation (Line(points = {{0, -110}, {-116, -110}, {-116, -64}, {-111, -64}}, color = {0, 0, 127}));
   connect(speedBias.y, speedReference.u2) annotation (Line(points = {{-118, -49}, {-114, -49}, {-114, -60}, {-111, -60}}, color = {0, 0, 127}));
   connect(speedReference.y, speedRefNorm.u) annotation (Line(points = {{-97, -64}, {-90, -64}}, color = {0, 0, 127}));
@@ -114,13 +102,10 @@ equation
   connect(powerReference.y, piPower.u_s) annotation (Line(points = {{-43, 41}, {-40, 41}, {-40, 29}}, color = {0, 0, 127}));
   connect(piPower.y, powerModeSwitch.u1) annotation (Line(points = {{-20, 25}, {5, 25}}, color = {0, 0, 127}));
   connect(piSpeed.y, powerModeSwitch.u3) annotation (Line(points = {{-20, -55}, {0, -55}, {0, 21}, {5, 21}}, color = {0, 0, 127}));
-  connect(powerMode, powerModeSwitch.u2) annotation (Line(points = {{-120, 0}, {-5, 0}, {-5, 25}, {5, 25}}, color = {255, 0, 255}));
   connect(powerModeSwitch.y, closedLoopSwitch.u1) annotation (Line(points = {{25, 25}, {30, 25}, {30, -11}}, color = {0, 0, 127}));
   connect(zero.y, closedLoopSwitch.u3) annotation (Line(points = {{22, -39}, {30, -39}, {30, -19}}, color = {0, 0, 127}));
-  connect(closedLoop, closedLoopSwitch.u2) annotation (Line(points = {{-120, 0}, {-15, 0}, {-15, -15}, {30, -15}}, color = {255, 0, 255}));
   connect(closedLoopSwitch.y, startSwitch.u3) annotation (Line(points = {{50, -15}, {55, -15}, {55, -4}}, color = {0, 0, 127}));
   connect(startOpening.y, startSwitch.u1) annotation (Line(points = {{47, 31}, {55, 31}, {55, 4}}, color = {0, 0, 127}));
-  connect(startingMode, startSwitch.u2) annotation (Line(points = {{-120, 0}, {-25, 0}, {-25, 0}, {55, 0}}, color = {255, 0, 255}));
   Y_cmd = startSwitch.y;
   y_pi = powerModeSwitch.y;
   der(Y_gv) = min(openRateMax, max(-closeRateMax, (Y_cmd - Y_gv) / T_servo));
@@ -136,8 +121,8 @@ algorithm
   end when;
 
   annotation (preferredView = "info", Documentation(info = "<html>
-<h4>Block-based Hydrotrol governor</h4>
-<p>This is the Standard Library block implementation of <code>GovernorHydrotrol</code>.
+<h4>Block-based HydroGov governor</h4>
+<p>This is the Standard Library block implementation of <code>HydroGov</code>.
 The public connectors, parameters, sequence states, synchronisation hold, droop and
 guide-vane actuator have the same meaning as in the equation-based model.</p>
 <p>The speed and power controllers use <code>Modelica.Blocks.Continuous.LimPID</code>.
@@ -146,4 +131,4 @@ Library arithmetic, source and logical blocks. The discrete state machine, timer
 asymmetric servo rate law remain equations because they carry event/state semantics
 not represented by a single Standard Library block.</p>
 </html>"));
-end GovernorHydrotrolBlocks;
+end HydroGovBlocks;
