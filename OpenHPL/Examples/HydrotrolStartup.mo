@@ -41,9 +41,9 @@ model HydrotrolStartup "Startup sequence using the Hydrotrol-like governor"
     annotation (Placement(transformation(origin = {11, 85}, extent = {{-10, -10}, {10, 10}})));
   Modelica.Blocks.Sources.Constant connectedLoad(k = 6e6)
     annotation (Placement(transformation(origin = {11, 59}, extent = {{-10, -10}, {10, 10}})));
-  Modelica.Blocks.Sources.BooleanStep startCommand(startTime = 5)
+  Modelica.Blocks.Sources.BooleanExpression startCommand(y = time >= 5 and time < 600)
     annotation (Placement(transformation(origin = {-55, 85}, extent = {{-10, -10}, {10, 10}})));
-  Modelica.Blocks.Sources.BooleanConstant stopCommand(k = false)
+  Modelica.Blocks.Sources.BooleanExpression stopCommand(y = time >= 600)
     annotation (Placement(transformation(origin = {-65, 60}, extent = {{-10, -10}, {10, 10}})));
 
   inner OpenHPL.Data data(SteadyState = false, Vdot_0 = 0, f_0 = 0)
@@ -80,8 +80,10 @@ equation
 <h4>Hydrotrol Startup Example</h4>
 <p>
 This example uses the simple turbine and generator models to demonstrate a complete
-unit startup. At <code>t=5 s</code> the governor opens the guide vanes, accelerates
-the unit, waits for synchronisation, and then applies a 6 MW electrical load.
+unit cycle. At <code>t=5 s</code> the governor opens the guide vanes, accelerates
+the unit, waits for synchronisation, and then applies a 6 MW electrical load. At
+<code>t=600 s</code> the stop command closes the guide vanes and returns the unit
+to the stopped state.
 </p>
 <p>
 The ideal breaker is represented by the feedback from <code>syncCommand</code> to
