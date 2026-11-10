@@ -3,6 +3,7 @@ model MCB "Mechanical equivalent of an electrical Main Circuit Breaker"
   parameter SI.Time t_close = 100 "Time at which the MCB should close";
   parameter SI.Time t_open = 300 "Time at which the MCB should open";
   parameter SI.PerUnit deltaSpeed = 0.01 "Max allowed speed difference for closing the MCB";
+  parameter Boolean useExternalControl = false "Use external close and open commands instead of fixed times";
 
   Modelica.Blocks.Logical.TriggeredTrapezoid triggeredTrapezoid(rising=0.01)
                                                                 annotation (Placement(transformation(extent={{40,-50},{60,-30}})));
@@ -18,15 +19,23 @@ model MCB "Mechanical equivalent of an electrical Main Circuit Breaker"
   Modelica.Mechanics.Rotational.Sensors.RelSpeedSensor relSpeedSensor annotation (Placement(transformation(extent={{60,40},{80,20}})));
   Modelica.Mechanics.Rotational.Components.Clutch clutch(fn_max=1e12)
                                                          annotation (Placement(transformation(extent={{60,10},{80,-10}})));
-  Modelica.Mechanics.Rotational.Interfaces.Flange_a genFlange "Flange to be connected with the generator" annotation (Placement(transformation(extent={{-110,-10},{-90,10}})));
-  Modelica.Mechanics.Rotational.Interfaces.Flange_b gridFlange "Flange to be connected with the grid" annotation (Placement(transformation(extent={{88,-10},{108,10}})));
+  Modelica.Mechanics.Rotational.Interfaces.Flange_a genFlange "Flange to be connected with the generator" annotation (Placement(transformation(extent={{-110,-10},{-90,10}}), iconTransformation(extent={{-110,-10},{-90,10}})));
+  Modelica.Mechanics.Rotational.Interfaces.Flange_b gridFlange "Flange to be connected with the grid" annotation (Placement(transformation(extent={{88,-10},{108,10}}), iconTransformation(extent={{90,-10},{110,10}})));
+  Modelica.Blocks.Interfaces.BooleanInput closeCommand if useExternalControl "Request to close the MCB" annotation (Placement(transformation(extent={{-110,70},{-90,90}}), iconTransformation(extent={{-120,70},{-80,90}})));
+  Modelica.Blocks.Interfaces.BooleanInput openCommand if useExternalControl "Request to open the MCB" annotation (Placement(transformation(extent={{-110,40},{-90,60}}), iconTransformation(extent={{-120,40},{-80,60}})));
   Modelica.Blocks.Interfaces.BooleanOutput isClosed "True when the MCB is closed" annotation (Placement(transformation(extent={{90,50},{110,70}}), iconTransformation(extent={{90,50},{110,70}})));
 
-  inner Data data annotation (Placement(transformation(extent={{-100,80},{-80,100}})));
+  inner Data data annotation (Placement(transformation(extent={{80,-100},{100,-80}})));
 equation
+  if useExternalControl then
+    connect(closeCommand, and1.u2) annotation (Line(points={{-100,80},{-90,80},{-90,-28},{-42,-28}}, color={255,0,255}));
+    connect(openCommand, rSFlipFlop.R) annotation (Line(points={{-100,50},{-90,50},{-90,-52},{-2,-52}}, color={255,0,255}));
+  else
+    connect(closeMCB.y, and1.u2) annotation (Line(points={{-53.4,-28},{-42,-28}}, color={255,0,255}));
+    connect(openMCB.y, rSFlipFlop.R) annotation (Line(points={{-53.4,-52},{-2,-52}}, color={255,0,255}));
+  end if;
   connect(clock.y, closeMCB.u) annotation (Line(points={{-79.4,-40},{-72,-40},{-72,-28},{-67.2,-28}},
                                                                                                   color={0,0,127}));
-  connect(rSFlipFlop.R, openMCB.y) annotation (Line(points={{-2,-52},{-53.4,-52}}, color={255,0,255}));
   connect(relSpeedSensor.flange_a, clutch.flange_a) annotation (Line(points={{60,30},{50,30},{50,0},{60,0}}, color={0,0,0}));
   connect(relSpeedSensor.flange_b, clutch.flange_b) annotation (Line(points={{80,30},{88,30},{88,0},{80,0}}, color={0,0,0}));
   connect(clutch.flange_a, genFlange) annotation (Line(points={{60,0},{-100,0}}, color={0,0,0}));
@@ -38,18 +47,31 @@ equation
                                                                                                  color={0,0,127}));
   connect(rSFlipFlop.Q, triggeredTrapezoid.u) annotation (Line(points={{21,-40},{38,-40}}, color={255,0,255}));
   connect(and1.y, rSFlipFlop.S) annotation (Line(points={{-19,-20},{-10,-20},{-10,-40},{-2,-40}}, color={255,0,255}));
-  connect(closeMCB.y, and1.u2) annotation (Line(points={{-53.4,-28},{-42,-28}}, color={255,0,255}));
   connect(lessThreshold.y, and1.u1) annotation (Line(points={{-11,50},{-50,50},{-50,-20},{-42,-20}}, color={255,0,255}));
   connect(rSFlipFlop.Q, isClosed) annotation (Line(points={{21,-40},{30,-40},{30,60},{100,60}}, color={255,0,255}));
-  annotation (Icon(graphics={
+  annotation (Documentation(info="<html>
+<h4>Main Circuit Breaker</h4>
+<p>
+By default, the breaker requests closure after <code>t_close</code> and opening
+after <code>t_open</code>. Closure is additionally gated by the relative-speed
+limit <code>deltaSpeed</code>.
+</p>
+<p>
+Set <code>useExternalControl</code> to use <code>closeCommand</code> and
+<code>openCommand</code> instead of the fixed times. The relative-speed limit
+still applies to a close request. <code>isClosed</code> reports the breaker state.
+</p>
+</html>"),
+    Diagram(coordinateSystem(preserveAspectRatio=false, extent={{-130,-110},{130,110}})),
+    Icon(coordinateSystem(preserveAspectRatio=false, extent={{-130,-160},{130,120}}), graphics={
         Rectangle(extent={{-100,100},{100,-100}}, lineColor={0,0,0}),
         Polygon(
           points={{6,-20},{-14,-44},{1.375,-44},{-14,-62},{14,-38},{0,-38},{20,-20},{6,-20}},
           lineColor={0,0,0},
           fillColor={238,46,47},
           fillPattern=FillPattern.Solid),
-        Line(points={{-90,0},{-40,0},{32,60}}, color={0,0,0}),
-        Line(points={{38,0},{88,0}}),
+        Line(points={{-100,0},{-40,0},{32,60}}, color={0,0,0}),
+        Line(points={{38,0},{100,0}}),
         Text(
           textColor={127,0,0},
           extent={{-100,-110},{100,-150}},

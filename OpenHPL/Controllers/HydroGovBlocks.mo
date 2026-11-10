@@ -73,10 +73,10 @@ model HydroGovBlocks "Block-based HydroGov governor with start sequence, synchro
   Boolean inSyncWindow "True while speed is inside the synchronising window";
   discrete Real t_window(start = Modelica.Constants.inf, fixed = true);
 protected
-  Modelica.Blocks.Interfaces.RealInput f_grid_int(unit = "Hz");
+  Modelica.Blocks.Interfaces.RealInput f_grid_int(unit = "Hz") annotation (Placement(transformation(origin = {-155, -20}, extent = {{-10, -10}, {10, 10}})));
 
 equation
-  connect(f_grid, f_grid_int) annotation (Line(points={{-180,-20},{-148,-20},{-148,-16},{-116,-16},{-116,-110},{0,-110}},
+  connect(f_grid, f_grid_int) annotation (Line(points={{-180,-20},{-155,-20}},
                                                                                 color = {0, 0, 127}));
   if not useGridFrequencyInput then
     f_grid_int = f_n;
@@ -94,7 +94,7 @@ equation
                                                                                                                                color = {255, 0, 255}));
   connect(modeDetermination.startingMode, startSwitch.u2) annotation (Line(points={{19.5,76},{32,76},{32,20},{52,20},{52,-2},{62,-2}},
                                                                                                                                color = {255, 0, 255}));
-  connect(f_grid_int, speedReference.u1) annotation (Line(points={{-16,-64},{-92,-64},{-92,-66},{-168,-66},{-168,3.6},{-93.2,3.6}},
+  connect(f_grid_int, speedReference.u1) annotation (Line(points={{-155,-20},{-145,-20},{-145,3.6},{-93.2,3.6}},
                                                                                                                         color = {0, 0, 127}));
   connect(speedBias.y, speedReference.u2) annotation (Line(points={{-125.4,-4},{-109.3,-4},{-109.3,-3.6},{-93.2,-3.6}},   color = {0, 0, 127}));
   connect(speedReference.y, speedRefNorm.u) annotation (Line(points={{-79.4,0},{-65.2,0}},      color = {0, 0, 127}));
@@ -105,7 +105,7 @@ equation
                                                                                             color = {0, 0, 127}));
   connect(P_ref, powerRefNorm.u) annotation (Line(points={{-180,80},{-146,80},{-146,60},{-131.2,60}},         color = {0, 0, 127}));
   connect(P_meas, powerMeasNorm.u) annotation (Line(points={{-180,20},{-129.2,20}},                           color = {0, 0, 127}));
-  connect(f_grid_int, droopError.u1) annotation (Line(points={{8,-90},{-68,-90},{-68,-36},{-144,-36},{-144,45.6},{-131.2,45.6}},
+  connect(f_grid_int, droopError.u1) annotation (Line(points={{-155,-20},{-155,45.6},{-131.2,45.6}},
                                                                                                                color = {0, 0, 127}));
   connect(f, droopError.u2) annotation (Line(points={{-138,-84},{-100,-84},{-100,36},{-114,36},{-114,32},{-136,32},{-136,38.4},{-131.2,38.4}},
                                                                                                            color = {0, 0, 127}));
@@ -151,6 +151,6 @@ Library arithmetic, source and logical blocks. The discrete state machine, timer
 asymmetric servo rate law remain equations because they carry event/state semantics
 not represented by a single Standard Library block.</p>
 </html>"),
-    Diagram(coordinateSystem(extent={{-160,-100},{100,100}})),
-    Icon(coordinateSystem(extent={{-160,-100},{100,100}})));
+    Diagram(coordinateSystem(extent={{-210,-110},{140,150}})),
+    Icon(coordinateSystem(extent={{-150,-150},{130,110}})));
 end HydroGovBlocks;

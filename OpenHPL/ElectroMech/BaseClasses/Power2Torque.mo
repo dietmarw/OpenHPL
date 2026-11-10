@@ -13,7 +13,7 @@ partial model Power2Torque "Converts a power signal to a torque in the rotationa
     Dialog(group = "Mechanical", enable = not useH));
   parameter Integer p(min = 2) = 12 "Number of poles for mechanical speed calculation" annotation(
     Dialog(group = "Mechanical"),
-    choices(choice = 2 "2,[3000|3600] rpm", choice = 4 "4,[1500|1800] rpm", choice = 6 "6,[1000|1200] rpm", choice = 8 "8,[750|900] rpm", choice = 10 "10,[600|720] rpm", choice = 12 "12,[500|600] rpm", choice = 14 "14,[429|514] rpm", choice = 16 "16,[375|450] rpm", choice = 18 "18,[333|400] rpm", choice = 20 "20,[300|360] rpm", choice = 22 "22,[273|327] rpm", choice = 24 "24,[250|300] rpm", choice = 26 "26,[231|277] rpm", choice = 28 "28,[214|257] rpm", choice = 30 "30,[200|240] rpm", choice = 28 "32,[187.5|225] rpm"));
+    choices(choice = 2 "2,[3000|3600] rpm", choice = 4 "4,[1500|1800] rpm", choice = 6 "6,[1000|1200] rpm", choice = 8 "8,[750|900] rpm", choice = 10 "10,[600|720] rpm", choice = 12 "12,[500|600] rpm", choice = 14 "14,[429|514] rpm", choice = 16 "16,[375|450] rpm", choice = 18 "18,[333|400] rpm", choice = 20 "20,[300|360] rpm", choice = 22 "22,[273|327] rpm", choice = 24 "24,[250|300] rpm", choice = 26 "26,[231|277] rpm", choice = 28 "28,[214|257] rpm", choice = 30 "30,[200|240] rpm", choice = 32 "32,[187.5|225] rpm"));
   parameter Modelica.Units.SI.Power Ploss = 0 "Friction losses of the unit at nominal speed" annotation(
     Dialog(group = "Mechanical"));
   parameter Modelica.Units.SI.PerUnit f_0 = 1 "Initial speed of the unit" annotation(
